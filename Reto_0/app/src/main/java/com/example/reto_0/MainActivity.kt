@@ -15,6 +15,7 @@ import com.example.reto_0.ui.theme.Reto_0Theme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
