@@ -10,6 +10,16 @@ class TicTacToeGame {
         const val OPEN_SPOT = ' '
     }
 
+    enum class DifficultyLevel { Easy, Harder, Expert }
+
+    var currentDifficultyLevel: DifficultyLevel = DifficultyLevel.Expert
+        private set // El setter es privado, solo se puede cambiar desde DENTRO de TicTacToeGame
+
+    // Método público para cambiar el nivel de dificultad
+    fun setDifficultyLevel(newLevel: DifficultyLevel) {
+        currentDifficultyLevel = newLevel
+    }
+
     private val board = CharArray(BOARD_SIZE) { OPEN_SPOT }
     private val rand = Random(System.currentTimeMillis())
 
@@ -25,48 +35,108 @@ class TicTacToeGame {
 
     fun getBoardCopy(): CharArray = board.copyOf()
 
+
+    private fun getRandomMove(): Int {
+        val availableSpots = mutableListOf<Int>()
+        for (i in board.indices) {
+            if (board[i] == OPEN_SPOT) {
+                availableSpots.add(i)
+            }
+        }
+        return if (availableSpots.isNotEmpty()) {
+            availableSpots.random(rand) // Usa el mismo 'rand' para consistencia
+        } else {
+            -1 // No hay movimientos disponibles
+        }
+    }
+
     /**
-     * Simple AI:
-     * 1) Win if possible
-     * 2) Block human if they'd win next
-     * 3) Take center
-     * 4) Take a corner
-     * 5) Take a side
+     * Devuelve el índice de un movimiento ganador para el COMPUTER_PLAYER.
+     * Devuelve -1 si no hay movimiento ganador.
+     * Importante: Deja el tablero en su estado original.
      */
-    fun getComputerMove(): Int {
-        // 1. Win if possible
+    private fun getWinningMove(): Int {
         for (i in board.indices) {
             if (board[i] == OPEN_SPOT) {
-                board[i] = COMPUTER_PLAYER
-                if (checkForWinnerInternal(board) == 3) {
-                    board[i] = OPEN_SPOT
+                board[i] = COMPUTER_PLAYER // Prueba el movimiento
+                if (checkForWinnerInternal(board) == 3) { // 3 significa que COMPUTER_PLAYER (O) ganó
+                    board[i] = OPEN_SPOT // Deshace el movimiento
                     return i
                 }
-                board[i] = OPEN_SPOT
+                board[i] = OPEN_SPOT // Deshace el movimiento
             }
         }
-        // 2. Block human win
-        for (i in board.indices) {
-            if (board[i] == OPEN_SPOT) {
-                board[i] = HUMAN_PLAYER
-                if (checkForWinnerInternal(board) == 2) {
-                    board[i] = OPEN_SPOT
-                    return i
-                }
-                board[i] = OPEN_SPOT
-            }
-        }
-        // 3. Center
-        if (board[4] == OPEN_SPOT) return 4
-        // 4. Corners
-        val corners = listOf(0, 2, 6, 8).shuffled(rand)
-        for (c in corners) if (board[c] == OPEN_SPOT) return c
-        // 5. Sides
-        val sides = listOf(1, 3, 5, 7).shuffled(rand)
-        for (s in sides) if (board[s] == OPEN_SPOT) return s
-        // fallback
-        for (i in board.indices) if (board[i] == OPEN_SPOT) return i
         return -1
+    }
+
+    /**
+     * Devuelve el índice de un movimiento para bloquear una victoria del HUMAN_PLAYER.
+     * Devuelve -1 si no hay movimiento de bloqueo.
+     * Importante: Deja el tablero en su estado original.
+     */
+    private fun getBlockingMove(): Int {
+        for (i in board.indices) {
+            if (board[i] == OPEN_SPOT) {
+                board[i] = HUMAN_PLAYER // Prueba si el humano jugara ahí
+                if (checkForWinnerInternal(board) == 2) { // 2 significa que HUMAN_PLAYER (X) ganó
+                    board[i] = OPEN_SPOT // Deshace el movimiento
+                    return i
+                }
+                board[i] = OPEN_SPOT // Deshace el movimiento
+            }
+        }
+        return -1
+    }
+
+    fun getComputerMove(): Int {
+        var move = -1 // Inicializa 'move'
+
+        when (currentDifficultyLevel) {
+            DifficultyLevel.Easy -> {
+                move = getRandomMove()
+            }
+            DifficultyLevel.Harder -> {
+                move = getWinningMove()
+                if (move == -1) {
+                    move = getRandomMove()
+                }
+            }
+            DifficultyLevel.Expert -> {
+                move = getWinningMove()
+                if (move == -1) {
+                    move = getBlockingMove()
+                }
+                // Si todavía no hay movimiento, intenta tomar el centro, luego esquinas, luego lados
+                if (move == -1) {
+                    if (board[4] == OPEN_SPOT) {
+                        move = 4
+                    } else {
+                        // Intenta una esquina aleatoria
+                        val corners = listOf(0, 2, 6, 8).shuffled(rand)
+                        for (c in corners) {
+                            if (board[c] == OPEN_SPOT) {
+                                move = c
+                                break
+                            }
+                        }
+                        // Si no hay esquinas, intenta un lado aleatorio
+                        if (move == -1) {
+                            val sides = listOf(1, 3, 5, 7).shuffled(rand)
+                            for (s in sides) {
+                                if (board[s] == OPEN_SPOT) {
+                                    move = s
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+                if (move == -1) {
+                    move = getRandomMove()
+                }
+            }
+        }
+        return move
     }
 
     /** Public wrapper: 0=no resultado, 1=empate, 2=X ganó, 3=O ganó */

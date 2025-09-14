@@ -4,16 +4,22 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.reto_3_4.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(),DifficultyDialogFragment.DifficultyDialogListener,
+QuitConfirmDialogFragment.QuitConfirmDialogListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var mBoardButtons: Array<Button>
     private lateinit var mGame: TicTacToeGame
     private var mGameOver: Boolean = false
+    private var humanFirstTurn: Boolean = true // true = human, false = computer
+    private var humanScore: Int = 0
+    private var androidScore: Int = 0
+    private var ties: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +34,10 @@ class MainActivity : AppCompatActivity() {
             binding.seven, binding.eight, binding.nine
         )
 
+        binding.humanScoreNumber.text = humanScore.toString()
+        binding.androidScoreNumber.text = androidScore.toString()
+        binding.tiesScoreNumber.text = ties.toString()
+
         startNewGame()
     }
 
@@ -39,7 +49,14 @@ class MainActivity : AppCompatActivity() {
             mBoardButtons[i].isEnabled = true
             mBoardButtons[i].setOnClickListener { onBoardButtonClick(i) }
         }
-        binding.information.text = getString(R.string.first_human)
+        if (humanFirstTurn) {
+            binding.information.text = getString(R.string.turn_human)
+        }else{
+            binding.information.text = getString(R.string.turn_computer)
+            val move = mGame.getComputerMove()
+            if (move >= 0) setMove(TicTacToeGame.COMPUTER_PLAYER, move)
+            binding.information.text = getString(R.string.turn_human)
+        }
     }
 
     private fun onBoardButtonClick(location: Int) {
@@ -59,14 +76,23 @@ class MainActivity : AppCompatActivity() {
             0 -> binding.information.text = getString(R.string.turn_human)
             1 -> {
                 binding.information.text = getString(R.string.result_tie)
+                ties++
+                binding.tiesScoreNumber.text = ties.toString()
+                humanFirstTurn = !humanFirstTurn
                 mGameOver = true
             }
             2 -> {
                 binding.information.text = getString(R.string.result_human_wins)
+                humanScore++
+                binding.humanScoreNumber.text = humanScore.toString()
+                humanFirstTurn = !humanFirstTurn
                 mGameOver = true
             }
             3 -> {
                 binding.information.text = getString(R.string.result_computer_wins)
+                androidScore++
+                binding.androidScoreNumber.text = androidScore.toString()
+                humanFirstTurn = !humanFirstTurn
                 mGameOver = true
             }
         }
@@ -81,13 +107,48 @@ class MainActivity : AppCompatActivity() {
         button.setTextColor(ContextCompat.getColor(this, colorRes))
     }
 
+    override fun onDifficultySelected(difficultyLevel: TicTacToeGame.DifficultyLevel) {
+        mGame.setDifficultyLevel(difficultyLevel)
+        Toast.makeText(this, "Difficulty selected: ${difficultyLevel.name}", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onQuitConfirmed() {
+        finish() // Cierra la actividad
+    }
+
+    private fun showDifficultyDialog() {
+        val dialog = DifficultyDialogFragment.newInstance(mGame.currentDifficultyLevel)
+        dialog.setDifficultyDialogListener(this) // Usar el método setter
+        dialog.show(supportFragmentManager, "DifficultyDialogTag")
+    }
+
+    private fun showQuitConfirmDialog() {
+        val dialog = QuitConfirmDialogFragment.newInstance()
+        dialog.setQuitConfirmDialogListener(this) // Usar el método setter
+        dialog.show(supportFragmentManager, "QuitConfirmDialogTag")
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menu.add(getString(R.string.menu_new_game))
+        menuInflater.inflate(R.menu.options_menu, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        startNewGame()
-        return true
+        return when (item.itemId) { // item.itemId corresponde al android:id del XML
+            R.id.new_game -> {
+                startNewGame()
+                true
+            }
+            R.id.ai_difficulty -> {
+                // Lógica para mostrar diálogo de dificultad
+                showDifficultyDialog()
+                true
+            }
+            R.id.quit -> {
+                showQuitConfirmDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }
