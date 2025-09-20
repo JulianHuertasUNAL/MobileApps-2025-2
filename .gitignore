@@ -1,0 +1,22 @@
+# Archivos y carpetas generadas por Android Studio en cualquier subcarpeta
+**/*.iml
+**/.gradle
+**/local.properties
+**/.idea/caches
+**/.idea/libraries
+**/.idea/modules.xml
+**/.idea/workspace.xml
+**/.idea/navEditor.xml
+**/.idea/assetWizardSettings.xml
+
+# Archivos temporales de sistema
+.DS_Store
+
+# Carpetas de build y compilación en cualquier subcarpeta
+**/build
+**/captures
+**/.externalNativeBuild
+**/.cxx
+
+# Local properties en cualquier parte
+**/local.properties
