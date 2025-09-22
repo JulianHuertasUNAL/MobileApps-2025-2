@@ -9,4 +9,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="tic_x">#008000</color> <!-- verde -->
     <color name="tic_o">#C00000</color> <!-- rojo -->
+    <color name="grid_lines_color">#CCCCCC</color> <!-- GRIS -->
 </resources>

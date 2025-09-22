@@ -27,15 +27,27 @@ class TicTacToeGame {
         for (i in board.indices) board[i] = OPEN_SPOT
     }
 
-    fun setMove(player: Char, location: Int) {
+    fun setMove(player: Char, location: Int): Boolean {
         if (location in 0 until BOARD_SIZE && board[location] == OPEN_SPOT) {
             board[location] = player
+            return true
         }
+        return false
     }
 
     fun getBoardCopy(): CharArray = board.copyOf()
 
-
+    fun getBoardOccupant(location: Int): Char {
+        return if (location in 0 until BOARD_SIZE) {
+            board[location]
+        } else {
+            // Manejo de error o valor por defecto si la ubicación es inválida.
+            // Podrías lanzar una IllegalArgumentException aquí también,
+            // pero para este caso, devolver OPEN_SPOT puede ser más simple
+            // si el código de llamada puede manejarlo.
+            OPEN_SPOT // O podrías lanzar una excepción.
+        }
+    }
     private fun getRandomMove(): Int {
         val availableSpots = mutableListOf<Int>()
         for (i in board.indices) {
