@@ -1,5 +1,6 @@
 package com.example.reto_3_4
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -15,7 +16,7 @@ import android.view.MotionEvent
 import android.media.AudioAttributes // Necesario para SoundPool en API 21+
 import android.media.SoundPool // Importar SoundPool
 import android.os.Build // Para comprobaciones de versión de API
-
+import androidx.core.content.edit
 
 
 class MainActivity : AppCompatActivity(),DifficultyDialogFragment.DifficultyDialogListener,
@@ -37,14 +38,31 @@ QuitConfirmDialogFragment.QuitConfirmDialogListener, BoardView.OnCellTouchListen
     private var mComputerSoundId: Int = 0
     private var mSoundPoolLoaded: Boolean = false
 
+    private lateinit var mPrefs: SharedPreferences
+
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState) // Siempre llama a la superclase primero
+
+        outState.putCharArray("board", mGame.getBoardCopy()) // Usando el método existente
+        outState.putBoolean("mGameOver", mGameOver)
+//        outState.putInt("humanScore", humanScore) // No es necesario Integer.valueOf() en Kotlin
+//        outState.putInt("androidScore", androidScore)
+//        outState.putInt("ties", ties)
+        outState.putCharSequence("infoText", binding.information.text) // Guarda el texto del TextView de información
+        outState.putBoolean("humanFirstTurn", humanFirstTurn) // El tutorial lo llama mGoFirst
+        outState.putBoolean("isHumanTurn", isHumanTurn) // También guarda de quién es el turno actual
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        mPrefs = getSharedPreferences("ttt_prefs", MODE_PRIVATE)
         mGame = TicTacToeGame()
         mBoardView = binding.boardView // Acceso directo a través de binding
-        mBoardView.setGame(mGame)
+        //mBoardView.setGame(mGame)
         mBoardView.setOnCellTouchListener(this)
 
         /*mBoardButtons = arrayOf(
@@ -53,8 +71,7 @@ QuitConfirmDialogFragment.QuitConfirmDialogListener, BoardView.OnCellTouchListen
             binding.seven, binding.eight, binding.nine
         )*/
 
-        updateScoreDisplay()
-        startNewGame()
+
 
         // Configurar AudioAttributes para SoundPool (necesario para API 21+)
         val audioAttributes = AudioAttributes.Builder()
@@ -87,6 +104,56 @@ QuitConfirmDialogFragment.QuitConfirmDialogListener, BoardView.OnCellTouchListen
         mHumanSoundId = mSoundPool?.load(this, R.raw.human_move, 1) ?: 0
         mComputerSoundId = mSoundPool?.load(this, R.raw.computer_move, 1) ?: 0
         // El tercer parámetro (priority) es 1 por defecto, no es crítico para pocos sonidos.
+
+
+        if (savedInstanceState == null) {
+            // La Activity se crea por primera vez
+            restoreGameSettingsFromPreferences()
+            updateScoreDisplay() // Para inicializar los scores a 0 en la UI
+            startNewGame()       // Inicia un juego completamente nuevo
+        } else {
+            // La Activity se está recreando, restaurar estado
+            val boardChars = savedInstanceState.getCharArray("board")
+            if (boardChars != null) {
+                mGame.setBoardState(boardChars)
+            }
+            mGameOver = savedInstanceState.getBoolean("mGameOver")
+//            humanScore = savedInstanceState.getInt("humanScore")
+//            androidScore = savedInstanceState.getInt("androidScore")
+//            ties = savedInstanceState.getInt("ties")
+            binding.information.text = savedInstanceState.getCharSequence("infoText", getString(R.string.turn_human)) // Restaurar infoText
+
+            // El tutorial usa 'mGoFirst' como Char, pero tú lo tienes como 'humanFirstTurn' Boolean
+            // y también 'isHumanTurn' Boolean.
+            humanFirstTurn = savedInstanceState.getBoolean("humanFirstTurn", true)
+            isHumanTurn = savedInstanceState.getBoolean("isHumanTurn", true)
+
+            restoreGameSettingsFromPreferences()
+
+            // Si el juego estaba terminado, nos aseguramos que no sea turno del humano
+            // y que el handler de movimientos del PC esté limpio.
+            if (mGameOver) {
+                isHumanTurn = false
+                computerMoveHandler.removeCallbacksAndMessages(null)
+            }
+            // Si no está game over, y NO es turno del humano (es decir, el PC estaba "pensando" o iba a jugar),
+            // podría ser necesario reiniciar el handler del PC.
+            // Pero por ahora, restaurar isHumanTurn y el texto de información debería ser suficiente
+            // para que el usuario sepa de quién es el turno. Un movimiento pendiente del PC con delay se perderá.
+        }
+
+        mBoardView.setGame(mGame) // Ahora establece el juego en BoardView, ya sea nuevo o restaurado
+        updateScoreDisplay()      // Mostrar las puntuaciones (ya sean 0s o restauradas)
+        mBoardView.invalidate()   // Asegura que el tablero (nuevo o restaurado) se dibuje correctamente
+    }
+
+    private fun restoreGameSettingsFromPreferences() {
+        humanScore = mPrefs.getInt("humanScore", 0) // El tutorial usa mHumanWins
+        androidScore = mPrefs.getInt("androidScore", 0) // El tutorial usa mComputerWins
+        ties = mPrefs.getInt("ties", 0) // El tutorial usa mTies
+
+        val difficultyOrdinal = mPrefs.getInt("difficultyLevel", TicTacToeGame.DifficultyLevel.Expert.ordinal)
+        mGame.setDifficultyLevel(TicTacToeGame.difficultyLevelFromOrdinal(difficultyOrdinal))
     }
 
     private fun updateScoreDisplay() {
@@ -308,11 +375,35 @@ QuitConfirmDialogFragment.QuitConfirmDialogListener, BoardView.OnCellTouchListen
                 showDifficultyDialog()
                 true
             }
-            R.id.quit -> {
-                showQuitConfirmDialog()
+            R.id.reset_scores -> {
+                humanScore = 0
+                androidScore = 0
+                ties = 0
+                updateScoreDisplay() // Actualizar la UI
+                // Opcional: También guardar inmediatamente estos 0s en SharedPreferences
+                // para que se refleje si la app se cierra antes de onStop()
+                val ed: SharedPreferences.Editor = mPrefs.edit()
+                ed.putInt("humanScore", humanScore)
+                ed.putInt("androidScore", androidScore)
+                ed.putInt("ties", ties)
+                ed.apply() // Usar apply aquí está bien
+                Toast.makeText(this, "Scores reset!", Toast.LENGTH_SHORT).show()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        // Guardar las puntuaciones actuales en SharedPreferences
+        mPrefs.edit {
+            putInt("humanScore", humanScore)     // Usando tus nombres de variable
+            putInt("androidScore", androidScore) // Usando tus nombres de variable
+            putInt("ties", ties)                 // Usando tus nombres de variable
+            putInt("difficultyLevel", mGame.currentDifficultyLevel.ordinal)
+        } // .apply() es asíncrono y generalmente preferido sobre .commit()
+        //ed.commit() // .commit() es síncrono, el tutorial lo usa. Para pocas escrituras, está bien.
     }
 }

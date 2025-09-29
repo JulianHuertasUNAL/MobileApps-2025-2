@@ -9,7 +9,7 @@
         android:title="@string/menu_options_difficulty"
     />
 
-    <item android:id="@+id/quit"
-        android:title="@string/menu_options_quit"
+    <item android:id="@+id/reset_scores"
+        android:title="@string/menu_options_reset_scores"
     />
 </menu>

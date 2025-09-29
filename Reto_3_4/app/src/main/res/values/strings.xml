@@ -14,7 +14,7 @@
 
     <string name="menu_options_new_game">New Game</string>
     <string name="menu_options_difficulty">Difficulty</string>
-    <string name="menu_options_quit">Quit Game</string>
+    <string name="menu_options_reset_scores">Reset Scores</string>
     <string name="dialog_difficulty_title">Select Difficulty</string>
     <string name="dialog_ok">Confirm</string>
     <string name="dialog_cancel">Cancel</string>

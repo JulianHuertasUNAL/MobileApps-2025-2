@@ -8,6 +8,10 @@ class TicTacToeGame {
         const val HUMAN_PLAYER = 'X'
         const val COMPUTER_PLAYER = 'O'
         const val OPEN_SPOT = ' '
+
+        fun difficultyLevelFromOrdinal(ordinal: Int): DifficultyLevel {
+            return DifficultyLevel.entries.toTypedArray().getOrElse(ordinal) { DifficultyLevel.Expert } // Valor por defecto
+        }
     }
 
     enum class DifficultyLevel { Easy, Harder, Expert }
@@ -33,6 +37,12 @@ class TicTacToeGame {
             return true
         }
         return false
+    }
+
+    fun setBoardState(newBoard: CharArray) {
+        if (newBoard.size == BOARD_SIZE) {
+            newBoard.copyInto(destination = board, destinationOffset = 0, startIndex = 0, endIndex = BOARD_SIZE)
+        }
     }
 
     fun getBoardCopy(): CharArray = board.copyOf()
