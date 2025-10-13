@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1056184849277",
+    "project_id": "triquidadm-2025-2",
+    "storage_bucket": "triquidadm-2025-2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1056184849277:android:06b24711e6b047ab233214",
+        "android_client_info": {
+          "package_name": "com.example.reto_3_4"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDl2xa_EmGcb9E3PDpSMlZ1-S2ciyz7f80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
