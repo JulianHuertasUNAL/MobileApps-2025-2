@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RetoSQLite</string>
+
+    <!-- Textos generales -->
+    <string name="action_settings">Configuración</string>
+    <string name="hello_world">¡Bienvenido al directorio!</string>
+
+    <!-- Menú principal -->
+    <string name="add_new">Agregar Empresa</string>
+    <string name="edit_company">Editar Empresa</string>
+    <string name="delete_company">Eliminar Empresa</string>
+
+    <!-- Campos de formulario -->
+    <string name="nombre">Nombre</string>
+    <string name="url">Página Web</string>
+    <string name="telefono">Teléfono</string>
+    <string name="email">Email</string>
+    <string name="servicios">Productos y Servicios</string>
+    <string name="clasificacion">Clasificación</string>
+
+    <!-- Botones y mensajes -->
+    <string name="save">Guardar Empresa</string>
+    <string name="delete_confirmation">¿Está seguro de que desea eliminar esta empresa?</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+
+    <!-- Títulos -->
+    <string name="title_activity_display_contact">Detalles de la Empresa</string>
+</resources>
